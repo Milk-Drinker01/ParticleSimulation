@@ -342,12 +342,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd27a3b35a482824ba6a1acc2f4c8dcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gUsesSin: 1
+  sinSpeed: 1
   particleCS: {fileID: 7200000, guid: efbcfecff77e9784baa7f54ca57686a1, type: 3}
   meshToDraw: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   materialToDraw: {fileID: 2100000, guid: 9afe596b05ecfcd468522e589737a4b3, type: 2}
   bounds:
     m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 15, y: 15, z: 15}
+    m_Extent: {x: 23, y: 15, z: 12}
   areaSize: 25
   g: 1
   drag: 1
@@ -356,10 +358,10 @@ MonoBehaviour:
   - {r: 0.16077948, g: 1, b: 0, a: 0}
   - {r: 0, g: 0.116532326, b: 1, a: 0}
   - {r: 1, g: 1, b: 0, a: 0}
-  row1: {x: 1, y: 0.64, z: 1, w: -0.45}
-  row2: {x: 3, y: 1.55, z: 3.08, w: -1.74}
-  row3: {x: 2.73, y: -0.54, z: 2, w: -1.59}
-  row4: {x: 2.06, y: -0.54, z: -1.53, w: 1}
+  row1: {x: 1, y: 0.64, z: 0.88, w: 0.25}
+  row2: {x: 1, y: 1.55, z: 1.27, w: -0.18}
+  row3: {x: 0.22, y: 0.33, z: 0.37, w: -0.27}
+  row4: {x: 0.5, y: 0.91, z: -0.2, w: -0.09}
   numEachType: d0070000e8030000f4010000e8030000
   debug: 0
 --- !u!4 &2081869675

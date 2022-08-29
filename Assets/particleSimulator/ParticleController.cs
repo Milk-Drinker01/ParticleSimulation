@@ -10,6 +10,8 @@ using UnityEditor.IMGUI.Controls;
 
 public class ParticleController : MonoBehaviour
 {
+    public bool gUsesSin;
+    public float sinSpeed = 1;
     public ComputeShader particleCS;
     public Mesh meshToDraw;
     public Material materialToDraw;
@@ -97,7 +99,10 @@ public class ParticleController : MonoBehaviour
     {
         particleCS.SetFloat(deltaTimeID, Time.deltaTime);
         particleCS.SetMatrix(attractionMatrixID, new Matrix4x4(row1, row2, row3, row4));
-        particleCS.SetFloat(gID, g);
+        float _g = g;
+        if (gUsesSin)
+            _g *= Mathf.Sin(Time.time * sinSpeed);
+        particleCS.SetFloat(gID, _g);
         particleCS.SetFloat(dID, drag);
         Vector3 extents = bounds.extents / 2;
         particleCS.SetVector(boundsXID, new Vector2(bounds.center.x - extents.x, bounds.center.x + extents.x));
