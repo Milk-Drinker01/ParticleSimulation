@@ -18,16 +18,18 @@ public class ParticleController : MonoBehaviour
     Bounds b;
     ComputeBuffer indirectArgsBuffer;
     ComputeBuffer particlesBuffer;
+    ComputeBuffer attractionsBuffer;
     public Bounds bounds;
     public float areaSize = 10;
     public float g = 10;
     public float drag = 1;
-    public Color[] colors;
+    [HideInInspector] public int OldNumParticleTypes;
+    public List<particleType> particleTypes;
     public Vector4 row1;
     public Vector4 row2;
     public Vector4 row3;
     public Vector4 row4;
-    public int[] numEachType;
+    public float[] attractionMatrix = new float[25];
 
     int count = 0;
 
@@ -46,6 +48,13 @@ public class ParticleController : MonoBehaviour
     int attractionMatrixID;
     int particleDataID;
 
+    [System.Serializable]
+    public struct particleType
+    {
+        public int count;
+        public Color particleColor;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct particleData
     {
@@ -62,9 +71,9 @@ public class ParticleController : MonoBehaviour
 
     private void OnEnable()
     {
-        for (int i = 0; i< numEachType.Length; i++)
+        for (int i = 0; i < particleTypes.Count; i++)
         {
-            count += numEachType[i];
+            count += particleTypes[i].count;
         }
         Application.targetFrameRate = 0;
         initKernelID = particleCS.FindKernel("init");
@@ -98,7 +107,8 @@ public class ParticleController : MonoBehaviour
     private void Update()
     {
         particleCS.SetFloat(deltaTimeID, Time.deltaTime);
-        particleCS.SetMatrix(attractionMatrixID, new Matrix4x4(row1, row2, row3, row4));
+        //particleCS.SetMatrix(attractionMatrixID, new Matrix4x4(row1, row2, row3, row4));
+        attractionsBuffer.SetData(attractionMatrix);
         float _g = g;
         if (gUsesSin)
             _g *= Mathf.Sin(Time.time * sinSpeed);
@@ -139,14 +149,19 @@ public class ParticleController : MonoBehaviour
 
     void CreateMaterialBuffers()
     {
+        attractionsBuffer = new ComputeBuffer(attractionMatrix.Length, sizeof(float));
+        attractionsBuffer.SetData(attractionMatrix);
+        particleCS.SetBuffer(VelocityKernelID, attractionMatrixID, attractionsBuffer);
+
         particlesBuffer = new ComputeBuffer(count, Marshal.SizeOf(typeof(particleData)));
 
         List<particleData> partData = new List<particleData>();
-        for (int i = 0; i < numEachType.Length; i++)
+        for (int i = 0; i < particleTypes.Count; i++)
         {
-            for (int j = 0; j < numEachType[i]; j++)
+            Vector3 _color = new Vector3(particleTypes[i].particleColor.r, particleTypes[i].particleColor.g, particleTypes[i].particleColor.b);
+            for (int j = 0; j < particleTypes[i].count; j++)
             {
-                partData.Add(new particleData { color = new Vector3(colors[i].r, colors[i].g, colors[i].b), type = i });
+                partData.Add(new particleData { color = _color, type = i });
             }
         }
         particlesBuffer.SetData(partData.ToArray());
@@ -173,6 +188,67 @@ public class ParticleController : MonoBehaviour
 [CustomEditor(typeof(ParticleController))]
 public class GameBoundsEditor : Editor
 {
+    static class Styles
+    {
+        public static readonly GUIStyle rightLabel = new GUIStyle("RightLabel");
+    }
+    const int kMaxLayers = 32;
+    const int indent = 30;
+    const int checkboxSize = 20;
+    int labelSize = 110;
+
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+        ParticleController particleScript = (ParticleController)target;
+
+        int count = particleScript.particleTypes.Count;
+        if (count != particleScript.OldNumParticleTypes)
+        {
+            particleScript.OldNumParticleTypes = count;
+            particleScript.attractionMatrix = new float[((count * count) + count) / 2];
+            Debug.Log("resetting");
+        }
+
+        GUI.matrix = Matrix4x4.identity;
+        int x = 0;
+        var r = GUILayoutUtility.GetRect(indent + checkboxSize * count + labelSize, checkboxSize);
+        for (int j = 0; j < count; j++)
+        {
+            GUI.Label(new Rect(labelSize + indent + r.x + x * checkboxSize, r.y, checkboxSize, checkboxSize), j.ToString());
+            x++;
+        }
+
+        int index = 0;
+        int y = 0;
+        for (int i = 0; i < count; i++)
+        {
+            GUILayout.BeginHorizontal();
+            x = 0;
+            r = GUILayoutUtility.GetRect(indent + checkboxSize * count + labelSize, checkboxSize);
+            var labelRect = new Rect(r.x + indent + (checkboxSize * (1+count)), r.y, labelSize, checkboxSize + 5);
+            GUI.Label(labelRect, i.ToString(), Styles.rightLabel);
+
+            for (int j = 0; j < count - y; j++)
+            {
+                var tooltip = new GUIContent("", i + "/" + j);
+                float val = particleScript.attractionMatrix[index];
+                float value = EditorGUI.FloatField(new Rect(labelSize + indent + r.x + x * checkboxSize + i * checkboxSize, r.y, checkboxSize, checkboxSize), val);
+
+                if (val != value)
+                {
+                    Undo.RecordObject(particleScript, "Change attraction Matrix");
+                    particleScript.attractionMatrix[index] = value;
+                }
+
+                x++;
+                index++;
+            }
+            y++;
+            GUILayout.EndHorizontal();
+        }
+
+    }
     // draw lines between a chosen game object
     // and a selection of added game objects
     private BoxBoundsHandle m_BoundsHandle = new BoxBoundsHandle();

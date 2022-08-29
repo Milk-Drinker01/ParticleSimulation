@@ -14,9 +14,11 @@ float2 boundsX;
 float2 boundsY;
 float2 boundsZ;
 RWStructuredBuffer<particleData> _particleData;
+StructuredBuffer<float> _attractionMatrix;
 
 float _deltaTime;
-float4x4 _attractionMatrix;
+//float4x4 _attractionMatrix;
+
 
 #pragma kernel init
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
@@ -46,7 +48,17 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         if (d > 0)
         {
             float f = _g * (1 / (d));
-            float attractionRule = _attractionMatrix[a.type][b.type];
+            //float attractionRule = _attractionMatrix[a.type][b.type];   // * k = (n*(n-1)/2) - (n-a.type)*((n-a.type)-1)/2 + b.type - a.type - 1
+            int n = 4;
+            int tA = a.type;
+            int tB = b.type;
+            if (tA < tB)
+            {
+                tA = b.type;
+                tB = a.type;
+            }
+            float attractionRule = _attractionMatrix[(n*(n-1)/2) - (n-tA)*((n-tA)-1)/2 + tB - tA - 1];
+            //float attractionRule = _attractionMatrix[n * tB - (((tB * tB) + tB)/2)];
             //velocityDiff += normalize(otherPosition - position) * f;
             _particleData[id.x].velocity += normalize(b.position - a.position) * f * attractionRule * _deltaTime;
             _particleData[i].velocity += normalize(a.position - b.position) * f * attractionRule * _deltaTime;

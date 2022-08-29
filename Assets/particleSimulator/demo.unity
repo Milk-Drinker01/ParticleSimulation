@@ -342,7 +342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd27a3b35a482824ba6a1acc2f4c8dcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gUsesSin: 1
+  gUsesSin: 0
   sinSpeed: 1
   particleCS: {fileID: 7200000, guid: efbcfecff77e9784baa7f54ca57686a1, type: 3}
   meshToDraw: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
@@ -353,16 +353,31 @@ MonoBehaviour:
   areaSize: 25
   g: 1
   drag: 1
-  colors:
-  - {r: 1, g: 0, b: 0, a: 0}
-  - {r: 0.16077948, g: 1, b: 0, a: 0}
-  - {r: 0, g: 0.116532326, b: 1, a: 0}
-  - {r: 1, g: 1, b: 0, a: 0}
+  OldNumParticleTypes: 4
+  particleTypes:
+  - count: 2000
+    particleColor: {r: 1, g: 0, b: 0, a: 0}
+  - count: 1000
+    particleColor: {r: 0, g: 1, b: 0, a: 0}
+  - count: 500
+    particleColor: {r: 0, g: 0, b: 1, a: 0}
+  - count: 1000
+    particleColor: {r: 0.9070605, g: 1, b: 0, a: 0}
   row1: {x: 1, y: 0.64, z: 0.88, w: 0.25}
   row2: {x: 1, y: 1.55, z: 1.27, w: -0.18}
   row3: {x: 0.22, y: 0.33, z: 0.37, w: -0.27}
   row4: {x: 0.5, y: 0.91, z: -0.2, w: -0.09}
-  numEachType: d0070000e8030000f4010000e8030000
+  attractionMatrix:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
   debug: 0
 --- !u!4 &2081869675
 Transform:
