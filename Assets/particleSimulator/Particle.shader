@@ -123,9 +123,9 @@ Shader "Particle"
 }
 /*ASEBEGIN
 Version=18935
--1590;399;1554;818;903.4155;74.96208;1;True;True
-Node;AmplifyShaderEditor.PosVertexDataNode;6;-587.8668,280.3075;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+-1590;399;1554;818;903.4155;71.96208;1;True;True
 Node;AmplifyShaderEditor.RangedFloatNode;11;-691.1025,514.8333;Inherit;False;Property;_size;size;0;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.PosVertexDataNode;6;-530.8668,225.3075;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ObjectToWorldTransfNode;13;-360.1025,507.8333;Inherit;False;1;0;FLOAT4;0,0,0,1;False;5;FLOAT4;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;10;-366.1026,386.8333;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;-1;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.ColorNode;5;-408.4667,2.107147;Inherit;False;Constant;_Color0;Color 0;0;0;Create;True;0;0;0;False;0;False;0,0,1,1;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
@@ -139,4 +139,4 @@ WireConnection;14;1;13;0
 WireConnection;17;0;1;0
 WireConnection;17;1;14;0
 ASEEND*/
-//CHKSM=D2DE9D07D4B4D9C10F8C0B2F60DA92751A242E25
+//CHKSM=4FDA6ABE7EB4B6581897D8BD270B056942D3DD16
