@@ -352,32 +352,44 @@ MonoBehaviour:
     m_Extent: {x: 23, y: 15, z: 12}
   areaSize: 25
   g: 1
-  drag: 1
-  OldNumParticleTypes: 4
+  drag: 0
+  OldNumParticleTypes: 5
   particleTypes:
-  - count: 2000
+  - count: 32
     particleColor: {r: 1, g: 0, b: 0, a: 0}
-  - count: 1000
+    randomColor: 1
+  - count: 16
     particleColor: {r: 0, g: 1, b: 0, a: 0}
-  - count: 500
+    randomColor: 0
+  - count: 8
     particleColor: {r: 0, g: 0, b: 1, a: 0}
-  - count: 1000
+    randomColor: 0
+  - count: 0
     particleColor: {r: 0.9070605, g: 1, b: 0, a: 0}
+    randomColor: 0
+  - count: 0
+    particleColor: {r: 1, g: 0, b: 1, a: 0}
+    randomColor: 0
   row1: {x: 1, y: 0.64, z: 0.88, w: 0.25}
   row2: {x: 1, y: 1.55, z: 1.27, w: -0.18}
   row3: {x: 0.22, y: 0.33, z: 0.37, w: -0.27}
   row4: {x: 0.5, y: 0.91, z: -0.2, w: -0.09}
   attractionMatrix:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  - 1
+  - 1
+  - 1
   - 0
   - 0
   - 1
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
   debug: 0
 --- !u!4 &2081869675
 Transform:

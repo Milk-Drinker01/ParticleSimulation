@@ -15,10 +15,6 @@ public class ParticleController : MonoBehaviour
     public ComputeShader particleCS;
     public Mesh meshToDraw;
     public Material materialToDraw;
-    Bounds b;
-    ComputeBuffer indirectArgsBuffer;
-    ComputeBuffer particlesBuffer;
-    ComputeBuffer attractionsBuffer;
     public Bounds bounds;
     public float areaSize = 10;
     public float g = 10;
@@ -31,6 +27,12 @@ public class ParticleController : MonoBehaviour
     public Vector4 row4;
     public float[] attractionMatrix = new float[25];
 
+
+    ComputeBuffer indirectArgsBuffer;
+    ComputeBuffer particleTypesBuffer;
+    ComputeBuffer particlesBuffer;
+    ComputeBuffer attractionsBuffer;
+
     int count = 0;
 
     int initKernelID;
@@ -38,6 +40,7 @@ public class ParticleController : MonoBehaviour
     int positionKernelID;
 
     int numParticlesID;
+    int numParticleTypesID;
     int areaSizeID;
     int boundsXID;
     int boundsYID;
@@ -47,12 +50,21 @@ public class ParticleController : MonoBehaviour
     int deltaTimeID;
     int attractionMatrixID;
     int particleDataID;
+    int particleTypesID;
 
     [System.Serializable]
+    [StructLayout(LayoutKind.Sequential)]
     public struct particleType
     {
         public int count;
         public Color particleColor;
+        public bool randomColor;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct particleTypeForCS
+    {
+        public Vector3 particleColor;
+        public int randomColor;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -81,6 +93,7 @@ public class ParticleController : MonoBehaviour
         positionKernelID = particleCS.FindKernel("applyPosition");
 
         numParticlesID = Shader.PropertyToID("_numParticles");
+        numParticleTypesID = Shader.PropertyToID("_numParticleTypes");
         areaSizeID = Shader.PropertyToID("_areaSize");
         boundsXID = Shader.PropertyToID("boundsX");
         boundsYID = Shader.PropertyToID("boundsY");
@@ -89,11 +102,8 @@ public class ParticleController : MonoBehaviour
         dID = Shader.PropertyToID("_drag");
         deltaTimeID = Shader.PropertyToID("_deltaTime");
         attractionMatrixID = Shader.PropertyToID("_attractionMatrix");
+        particleTypesID = Shader.PropertyToID("_particleTypes");
         particleDataID = Shader.PropertyToID("_particleData");
-
-        b = new Bounds();
-        b.center = Vector3.zero;
-        b.size = Vector3.one * 99999999;
 
         createArgsBuffer();
         CreateMaterialBuffers();
@@ -131,7 +141,7 @@ public class ParticleController : MonoBehaviour
                 Debug.Log(data[i].particlePosition);
             }
         }
-        Graphics.DrawMeshInstancedIndirect(meshToDraw, 0, materialToDraw, b, indirectArgsBuffer, 0, null, UnityEngine.Rendering.ShadowCastingMode.Off, true);
+        Graphics.DrawMeshInstancedIndirect(meshToDraw, 0, materialToDraw, bounds, indirectArgsBuffer, 0, null, UnityEngine.Rendering.ShadowCastingMode.Off, true);
     }
 
     void createArgsBuffer()
@@ -149,26 +159,33 @@ public class ParticleController : MonoBehaviour
 
     void CreateMaterialBuffers()
     {
+        particleCS.SetInt(numParticlesID, count);
+        particleCS.SetFloat(areaSizeID, areaSize);
+
         attractionsBuffer = new ComputeBuffer(attractionMatrix.Length, sizeof(float));
         attractionsBuffer.SetData(attractionMatrix);
         particleCS.SetBuffer(VelocityKernelID, attractionMatrixID, attractionsBuffer);
 
-        particlesBuffer = new ComputeBuffer(count, Marshal.SizeOf(typeof(particleData)));
+        particleCS.SetInt(numParticleTypesID, particleTypes.Count);
 
+        
         List<particleData> partData = new List<particleData>();
+        List<particleTypeForCS> partTypes = new List<particleTypeForCS>();
         for (int i = 0; i < particleTypes.Count; i++)
         {
             Vector3 _color = new Vector3(particleTypes[i].particleColor.r, particleTypes[i].particleColor.g, particleTypes[i].particleColor.b);
+            partTypes.Add(new particleTypeForCS { particleColor = _color, randomColor = particleTypes[i].randomColor ? 1 : 0 });
             for (int j = 0; j < particleTypes[i].count; j++)
             {
-                partData.Add(new particleData { color = _color, type = i });
+                partData.Add(new particleData { type = i });
             }
         }
+        particleTypesBuffer = new ComputeBuffer(particleTypes.Count, Marshal.SizeOf(typeof(particleTypeForCS)));
+        particleTypesBuffer.SetData(partTypes.ToArray());
+        particleCS.SetBuffer(initKernelID, particleTypesID, particleTypesBuffer);
+
+        particlesBuffer = new ComputeBuffer(count, Marshal.SizeOf(typeof(particleData)));
         particlesBuffer.SetData(partData.ToArray());
-
-        particleCS.SetInt(numParticlesID, count);
-        particleCS.SetFloat(areaSizeID, areaSize);
-
         particleCS.SetBuffer(initKernelID, particleDataID, particlesBuffer);
         particleCS.SetBuffer(VelocityKernelID, particleDataID, particlesBuffer);
         particleCS.SetBuffer(positionKernelID, particleDataID, particlesBuffer);
@@ -181,6 +198,7 @@ public class ParticleController : MonoBehaviour
     {
         indirectArgsBuffer.Dispose();
         particlesBuffer.Dispose();
+        particleTypesBuffer.Dispose();
     }
 }
 

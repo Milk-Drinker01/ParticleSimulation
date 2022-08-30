@@ -7,12 +7,14 @@ float random(float2 uv)
 }
 
 int _numParticles;
+int _numParticleTypes;
 float _g;
 float _drag;
 float _areaSize;
 float2 boundsX;
 float2 boundsY;
 float2 boundsZ;
+RWStructuredBuffer<particleType> _particleTypes;
 RWStructuredBuffer<particleData> _particleData;
 StructuredBuffer<float> _attractionMatrix;
 
@@ -24,7 +26,10 @@ float _deltaTime;
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
 void init(uint3 id : SV_DispatchThreadID)
 {
-    //_particleData[id.x].color = float3(random(float2((float) _particleData[id.x].type, 0)), random(float2((float) _particleData[id.x].type, 1)), random(float2((float) _particleData[id.x].type, 2)));
+    if (_particleTypes[_particleData[id.x].type].randomColor == 1)
+        _particleData[id.x].color = float3(random(float2((float) id.x, 0)), random(float2((float) id.x, 1)), random(float2((float) id.x, 2)));
+    else
+        _particleData[id.x].color = _particleTypes[_particleData[id.x].type].color;
     _particleData[id.x].position = _areaSize * float3(random(float2((float) id.x, 0)), random(float2((float) id.x, 1)), random(float2((float) id.x, 2)));
     _particleData[id.x].position -= ((_areaSize / 2) * float3(1, 1, 1));
     _particleData[id.x].velocity = float3(0, 0, 0);
@@ -49,17 +54,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         {
             float f = _g * (1 / (d));
             //float attractionRule = _attractionMatrix[a.type][b.type];   // * k = (n*(n-1)/2) - (n-a.type)*((n-a.type)-1)/2 + b.type - a.type - 1
-            int n = 4;
+            int n = _numParticleTypes;
             int tA = a.type;
             int tB = b.type;
-            if (tA < tB)
-            {
-                tA = b.type;
-                tB = a.type;
-            }
-            float attractionRule = _attractionMatrix[(n*(n-1)/2) - (n-tA)*((n-tA)-1)/2 + tB - tA - 1];
-            //float attractionRule = _attractionMatrix[n * tB - (((tB * tB) + tB)/2)];
-            //velocityDiff += normalize(otherPosition - position) * f;
+            //if (tA < tB)
+            //{
+            //    tA = b.type;
+            //    tB = a.type;
+            //}
+            float attractionRule = _attractionMatrix[(n * (tA) - (((tA - 1) * (tA)) / 2)) + (tB - tA)];
             _particleData[id.x].velocity += normalize(b.position - a.position) * f * attractionRule * _deltaTime;
             _particleData[i].velocity += normalize(a.position - b.position) * f * attractionRule * _deltaTime;
         }
