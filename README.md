@@ -8,5 +8,7 @@ note: this isnt meant to be used as a gpu particle system, but rather an innacur
 
 included in this project is a single compute shader and a single script.
 
+https://youtu.be/WPQWNc0nIGs
+
 https://streamable.com/sogjkd
 
