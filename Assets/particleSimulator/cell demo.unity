@@ -199,14 +199,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 30, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -30}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1066047850
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -345,51 +345,47 @@ MonoBehaviour:
   gUsesSin: 0
   sinSpeed: 1
   particleCS: {fileID: 7200000, guid: efbcfecff77e9784baa7f54ca57686a1, type: 3}
-  meshToDraw: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  meshToDraw: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   materialToDraw: {fileID: 2100000, guid: 9afe596b05ecfcd468522e589737a4b3, type: 2}
   bounds:
     m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 23, y: 15, z: 12}
-  areaSize: 25
-  g: 1
-  drag: 0
-  OldNumParticleTypes: 5
+    m_Extent: {x: 23, y: 13, z: 5}
+  g: 0.3
+  drag: 1
+  distanceThreshold: 1
+  useTriangularMatrix: 0
+  OldNumParticleTypes: 4
+  useTriangularMatrixOld: 0
   particleTypes:
-  - count: 32
+  - count: 1500
     particleColor: {r: 1, g: 0, b: 0, a: 0}
-    randomColor: 1
-  - count: 16
+    randomColor: 0
+  - count: 750
     particleColor: {r: 0, g: 1, b: 0, a: 0}
     randomColor: 0
-  - count: 8
+  - count: 250
     particleColor: {r: 0, g: 0, b: 1, a: 0}
     randomColor: 0
-  - count: 0
+  - count: 500
     particleColor: {r: 0.9070605, g: 1, b: 0, a: 0}
     randomColor: 0
-  - count: 0
-    particleColor: {r: 1, g: 0, b: 1, a: 0}
-    randomColor: 0
-  row1: {x: 1, y: 0.64, z: 0.88, w: 0.25}
-  row2: {x: 1, y: 1.55, z: 1.27, w: -0.18}
-  row3: {x: 0.22, y: 0.33, z: 0.37, w: -0.27}
-  row4: {x: 0.5, y: 0.91, z: -0.2, w: -0.09}
   attractionMatrix:
+  - -2
+  - 0
+  - 0.1
+  - -1
+  - -5
+  - -3
   - 1
-  - 1
-  - 1
-  - 0
+  - -1
   - 0
   - 1
+  - -1
+  - 2
+  - 5
   - 0
   - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  - 2
   debug: 0
 --- !u!4 &2081869675
 Transform:

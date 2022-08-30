@@ -5,18 +5,24 @@ float random(float2 uv)
 {
     return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
 }
+float remapToBounds(float val, float newMin, float newMax)
+{
+    return (val * (newMax - newMin)) + newMin;
+}
 
 int _numParticles;
 int _numParticleTypes;
 float _g;
 float _drag;
-float _areaSize;
 float2 boundsX;
 float2 boundsY;
 float2 boundsZ;
-RWStructuredBuffer<particleType> _particleTypes;
-RWStructuredBuffer<particleData> _particleData;
+float _distThresh;
+
 StructuredBuffer<float> _attractionMatrix;
+StructuredBuffer<particleType> _particleTypes;
+RWStructuredBuffer<particleData> _particleData;
+RWStructuredBuffer<float3> _particleVelocities;
 
 float _deltaTime;
 //float4x4 _attractionMatrix;
@@ -30,11 +36,22 @@ void init(uint3 id : SV_DispatchThreadID)
         _particleData[id.x].color = float3(random(float2((float) id.x, 0)), random(float2((float) id.x, 1)), random(float2((float) id.x, 2)));
     else
         _particleData[id.x].color = _particleTypes[_particleData[id.x].type].color;
-    _particleData[id.x].position = _areaSize * float3(random(float2((float) id.x, 0)), random(float2((float) id.x, 1)), random(float2((float) id.x, 2)));
-    _particleData[id.x].position -= ((_areaSize / 2) * float3(1, 1, 1));
-    _particleData[id.x].velocity = float3(0, 0, 0);
+    //_particleData[id.x].position = _areaSize * float3(random(float2((float) id.x, 0)), random(float2((float) id.x, 1)), random(float2((float) id.x, 2)));
+    //_particleData[id.x].position -= ((_areaSize / 2) * float3(1, 1, 1));
+    _particleData[id.x].position.x = remapToBounds(random(float2((float) id.x, 0)), boundsX.x, boundsX.y);
+    _particleData[id.x].position.y = remapToBounds(random(float2((float) id.x, 1)), boundsY.x, boundsY.y);
+    _particleData[id.x].position.z = remapToBounds(random(float2((float) id.x, 2)), boundsZ.x, boundsZ.y);
+    _particleVelocities[id.x] = float3(0, 0, 0);
 }
 
+uint triangular;
+float getAttraction(uint indexA, uint indexB)
+{
+    if (triangular == 1)
+        return _attractionMatrix[(_numParticleTypes * (indexA) - (((indexA - 1) * (indexA)) / 2)) + (indexB - indexA)];
+
+    return _attractionMatrix[(indexA * _numParticleTypes) + indexB];
+}
 
 #pragma kernel CSMain
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
@@ -46,34 +63,61 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     particleData b;
     float3 velocityDiff = float3(0, 0, 0);
     
+    //_particleData[id.x].velocity = float3(0,1,0);
+    //return;
     for (int i = id.x; i < _numParticles; i++)
     {
         b = _particleData[i];
         float d = distance(a.position, b.position);
         if (d > 0)
         {
-            float f = _g * (1 / (d));
-            //float attractionRule = _attractionMatrix[a.type][b.type];   // * k = (n*(n-1)/2) - (n-a.type)*((n-a.type)-1)/2 + b.type - a.type - 1
-            int n = _numParticleTypes;
-            int tA = a.type;
-            int tB = b.type;
-            //if (tA < tB)
-            //{
-            //    tA = b.type;
-            //    tB = a.type;
-            //}
-            float attractionRule = _attractionMatrix[(n * (tA) - (((tA - 1) * (tA)) / 2)) + (tB - tA)];
-            _particleData[id.x].velocity += normalize(b.position - a.position) * f * attractionRule * _deltaTime;
-            _particleData[i].velocity += normalize(a.position - b.position) * f * attractionRule * _deltaTime;
+            d = clamp(d, _distThresh, 9999);
+            float f = _g * (1 / (d * d));
+            float attractionRule = getAttraction(a.type, b.type);
+            float3 difference = normalize(b.position - a.position) * f * _deltaTime;
+            velocityDiff += difference * attractionRule;
+            if (triangular == 0)
+                attractionRule = getAttraction(b.type, a.type);
+            _particleVelocities[i] -= difference * attractionRule;
+
+            //_particleData[id.x].velocity += difference * attractionRule;
+            //_particleData[i].velocity -= difference * attractionRule;
         }
     }
+    _particleVelocities[id.x] += velocityDiff;
 }
 
 #pragma kernel applyPosition
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
 void applyPosition(uint3 id : SV_DispatchThreadID)
 {
+    //_particleData[id.x].position += _particleVelocities[id.x] * _deltaTime;
+
+    float pos = _particleData[id.x].position.x;
+    if ((pos > boundsX.y && _particleVelocities[id.x].x > 0) || (pos < boundsX.x && _particleVelocities[id.x].x < 0))
+    {
+        _particleVelocities[id.x].x *= -1;
+        //_particleData[id.x].position.x = clamp(pos, boundsX.x, boundsX.y);
+    }
     
+    pos = _particleData[id.x].position.y;
+    if ((pos > boundsY.y && _particleVelocities[id.x].y > 0) || (pos < boundsY.x && _particleVelocities[id.x].y < 0))
+    {
+        _particleVelocities[id.x].y *= -1;
+        //_particleData[id.x].position.y = clamp(pos, boundsY.x, boundsY.y);
+    }
+    
+    pos = _particleData[id.x].position.z;
+    if ((pos > boundsZ.y && _particleVelocities[id.x].z > 0) || (pos < boundsZ.x && _particleVelocities[id.x].z < 0))
+    {
+        _particleVelocities[id.x].z *= -1;
+        //_particleData[id.x].position.z = clamp(pos, boundsZ.x, boundsZ.y);
+    }
+    
+    _particleData[id.x].position += _particleVelocities[id.x] * _deltaTime;
+    
+    _particleVelocities[id.x] += -_particleVelocities[id.x] * (_drag * _deltaTime);
+    return;
     if ((_particleData[id.x].position.x > boundsX.y && _particleData[id.x].velocity.x > 0) || (_particleData[id.x].position.x < boundsX.x && _particleData[id.x].velocity.x < 0))
         _particleData[id.x].velocity.x *= -1;
     

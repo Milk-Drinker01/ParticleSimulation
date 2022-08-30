@@ -16,21 +16,20 @@ public class ParticleController : MonoBehaviour
     public Mesh meshToDraw;
     public Material materialToDraw;
     public Bounds bounds;
-    public float areaSize = 10;
     public float g = 10;
     public float drag = 1;
+    public float distanceThreshold = 1;
+    public bool useTriangularMatrix;
     [HideInInspector] public int OldNumParticleTypes;
+    [HideInInspector] public bool useTriangularMatrixOld;
     public List<particleType> particleTypes;
-    public Vector4 row1;
-    public Vector4 row2;
-    public Vector4 row3;
-    public Vector4 row4;
     public float[] attractionMatrix = new float[25];
 
 
     ComputeBuffer indirectArgsBuffer;
     ComputeBuffer particleTypesBuffer;
     ComputeBuffer particlesBuffer;
+    ComputeBuffer velocitiesBuffer;
     ComputeBuffer attractionsBuffer;
 
     int count = 0;
@@ -41,7 +40,6 @@ public class ParticleController : MonoBehaviour
 
     int numParticlesID;
     int numParticleTypesID;
-    int areaSizeID;
     int boundsXID;
     int boundsYID;
     int boundsZID;
@@ -50,7 +48,10 @@ public class ParticleController : MonoBehaviour
     int deltaTimeID;
     int attractionMatrixID;
     int particleDataID;
+    int particleVelocityID;
     int particleTypesID;
+    int distThreshID;
+    int triangularID;
 
     [System.Serializable]
     [StructLayout(LayoutKind.Sequential)]
@@ -94,7 +95,6 @@ public class ParticleController : MonoBehaviour
 
         numParticlesID = Shader.PropertyToID("_numParticles");
         numParticleTypesID = Shader.PropertyToID("_numParticleTypes");
-        areaSizeID = Shader.PropertyToID("_areaSize");
         boundsXID = Shader.PropertyToID("boundsX");
         boundsYID = Shader.PropertyToID("boundsY");
         boundsZID = Shader.PropertyToID("boundsZ");
@@ -104,6 +104,9 @@ public class ParticleController : MonoBehaviour
         attractionMatrixID = Shader.PropertyToID("_attractionMatrix");
         particleTypesID = Shader.PropertyToID("_particleTypes");
         particleDataID = Shader.PropertyToID("_particleData");
+        particleVelocityID = Shader.PropertyToID("_particleVelocities");
+        distThreshID = Shader.PropertyToID("_distThresh");
+        triangularID = Shader.PropertyToID("triangular");
 
         createArgsBuffer();
         CreateMaterialBuffers();
@@ -117,17 +120,19 @@ public class ParticleController : MonoBehaviour
     private void Update()
     {
         particleCS.SetFloat(deltaTimeID, Time.deltaTime);
-        //particleCS.SetMatrix(attractionMatrixID, new Matrix4x4(row1, row2, row3, row4));
         attractionsBuffer.SetData(attractionMatrix);
         float _g = g;
         if (gUsesSin)
             _g *= Mathf.Sin(Time.time * sinSpeed);
         particleCS.SetFloat(gID, _g);
         particleCS.SetFloat(dID, drag);
+        particleCS.SetFloat(distThreshID, distanceThreshold);
+
         Vector3 extents = bounds.extents / 2;
-        particleCS.SetVector(boundsXID, new Vector2(bounds.center.x - extents.x, bounds.center.x + extents.x));
-        particleCS.SetVector(boundsYID, new Vector2(bounds.center.y - extents.y, bounds.center.y + extents.y));
-        particleCS.SetVector(boundsZID, new Vector2(bounds.center.z - extents.z, bounds.center.z + extents.z));
+        Vector3 center = bounds.center / 2;
+        particleCS.SetVector(boundsXID, new Vector2(center.x - extents.x, center.x + extents.x));
+        particleCS.SetVector(boundsYID, new Vector2(center.y - extents.y, center.y + extents.y));
+        particleCS.SetVector(boundsZID, new Vector2(center.z - extents.z, center.z + extents.z));
 
         particleCS.Dispatch(VelocityKernelID, count, 1, 1);
         particleCS.Dispatch(positionKernelID, count, 1, 1);
@@ -159,15 +164,14 @@ public class ParticleController : MonoBehaviour
 
     void CreateMaterialBuffers()
     {
+        particleCS.SetInt(triangularID, useTriangularMatrix ? 1 : 0);
         particleCS.SetInt(numParticlesID, count);
-        particleCS.SetFloat(areaSizeID, areaSize);
 
         attractionsBuffer = new ComputeBuffer(attractionMatrix.Length, sizeof(float));
         attractionsBuffer.SetData(attractionMatrix);
         particleCS.SetBuffer(VelocityKernelID, attractionMatrixID, attractionsBuffer);
-
+        
         particleCS.SetInt(numParticleTypesID, particleTypes.Count);
-
         
         List<particleData> partData = new List<particleData>();
         List<particleTypeForCS> partTypes = new List<particleTypeForCS>();
@@ -184,13 +188,23 @@ public class ParticleController : MonoBehaviour
         particleTypesBuffer.SetData(partTypes.ToArray());
         particleCS.SetBuffer(initKernelID, particleTypesID, particleTypesBuffer);
 
-        particlesBuffer = new ComputeBuffer(count, Marshal.SizeOf(typeof(particleData)));
+        particlesBuffer = new ComputeBuffer(count, Marshal.SizeOf(typeof(particleData)), ComputeBufferType.Structured);
         particlesBuffer.SetData(partData.ToArray());
         particleCS.SetBuffer(initKernelID, particleDataID, particlesBuffer);
         particleCS.SetBuffer(VelocityKernelID, particleDataID, particlesBuffer);
         particleCS.SetBuffer(positionKernelID, particleDataID, particlesBuffer);
         materialToDraw.SetBuffer(particleDataID, particlesBuffer);
 
+        velocitiesBuffer = new ComputeBuffer(count, Marshal.SizeOf(typeof(Vector3)));
+        particleCS.SetBuffer(initKernelID, particleVelocityID, velocitiesBuffer);
+        particleCS.SetBuffer(VelocityKernelID, particleVelocityID, velocitiesBuffer);
+        particleCS.SetBuffer(positionKernelID, particleVelocityID, velocitiesBuffer);
+
+        Vector3 extents = bounds.extents / 2;
+        Vector3 center = bounds.center / 2;
+        particleCS.SetVector(boundsXID, new Vector2(center.x - extents.x, center.x + extents.x));
+        particleCS.SetVector(boundsYID, new Vector2(center.y - extents.y, center.y + extents.y));
+        particleCS.SetVector(boundsZID, new Vector2(center.z - extents.z, center.z + extents.z));
         particleCS.Dispatch(initKernelID, count, 1, 1);
     }
 
@@ -220,11 +234,17 @@ public class GameBoundsEditor : Editor
         DrawDefaultInspector();
         ParticleController particleScript = (ParticleController)target;
 
+        bool triangular = particleScript.useTriangularMatrix;
+        //bool triangular = true;
         int count = particleScript.particleTypes.Count;
-        if (count != particleScript.OldNumParticleTypes)
+        if (count != particleScript.OldNumParticleTypes || triangular != particleScript.useTriangularMatrixOld)
         {
+            particleScript.useTriangularMatrixOld = triangular;
             particleScript.OldNumParticleTypes = count;
-            particleScript.attractionMatrix = new float[((count * count) + count) / 2];
+            if (triangular)
+                particleScript.attractionMatrix = new float[((count * count) + count) / 2];
+            else
+                particleScript.attractionMatrix = new float[count * count];
             Debug.Log("resetting");
         }
 
@@ -239,6 +259,7 @@ public class GameBoundsEditor : Editor
 
         int index = 0;
         int y = 0;
+        int jCount = count;
         for (int i = 0; i < count; i++)
         {
             GUILayout.BeginHorizontal();
@@ -246,12 +267,15 @@ public class GameBoundsEditor : Editor
             r = GUILayoutUtility.GetRect(indent + checkboxSize * count + labelSize, checkboxSize);
             var labelRect = new Rect(r.x + indent + (checkboxSize * (1+count)), r.y, labelSize, checkboxSize + 5);
             GUI.Label(labelRect, i.ToString(), Styles.rightLabel);
-
-            for (int j = 0; j < count - y; j++)
+            
+            for (int j = 0; j < jCount; j++)
             {
                 var tooltip = new GUIContent("", i + "/" + j);
                 float val = particleScript.attractionMatrix[index];
-                float value = EditorGUI.FloatField(new Rect(labelSize + indent + r.x + x * checkboxSize + i * checkboxSize, r.y, checkboxSize, checkboxSize), val);
+                int extra = i * checkboxSize;
+                if (!triangular)
+                    extra = 0;
+                float value = EditorGUI.FloatField(new Rect(labelSize + indent + r.x + x * checkboxSize + extra, r.y, checkboxSize, checkboxSize), val);
 
                 if (val != value)
                 {
@@ -263,6 +287,8 @@ public class GameBoundsEditor : Editor
                 index++;
             }
             y++;
+            if (triangular)
+                jCount--;
             GUILayout.EndHorizontal();
         }
 
