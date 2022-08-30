@@ -214,6 +214,13 @@ public class ParticleController : MonoBehaviour
         particlesBuffer.Dispose();
         particleTypesBuffer.Dispose();
     }
+    public void randomizeAttractions()
+    {
+        for (int i = 0; i < attractionMatrix.Length; i++)
+        {
+            attractionMatrix[i] = UnityEngine.Random.Range(-1f, 1f);
+        }
+    }
 }
 
 #if UNITY_EDITOR
@@ -290,6 +297,11 @@ public class GameBoundsEditor : Editor
             if (triangular)
                 jCount--;
             GUILayout.EndHorizontal();
+        }
+
+        if (GUILayout.Button("Randomize Attractions"))
+        {
+            particleScript.randomizeAttractions();
         }
 
     }

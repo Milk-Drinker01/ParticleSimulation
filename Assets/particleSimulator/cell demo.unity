@@ -349,7 +349,7 @@ MonoBehaviour:
   materialToDraw: {fileID: 2100000, guid: 9afe596b05ecfcd468522e589737a4b3, type: 2}
   bounds:
     m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 23, y: 13, z: 5}
+    m_Extent: {x: 23, y: 13, z: 0}
   g: 0.3
   drag: 1
   distanceThreshold: 1
