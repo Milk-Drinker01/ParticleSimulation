@@ -213,6 +213,7 @@ public class ParticleController : MonoBehaviour
         indirectArgsBuffer.Dispose();
         particlesBuffer.Dispose();
         particleTypesBuffer.Dispose();
+        velocitiesBuffer.Dispose();
     }
     public void randomizeAttractions()
     {
@@ -233,7 +234,7 @@ public class GameBoundsEditor : Editor
     }
     const int kMaxLayers = 32;
     const int indent = 30;
-    const int checkboxSize = 20;
+    const int checkboxSize = 35;
     int labelSize = 110;
 
     public override void OnInspectorGUI()
