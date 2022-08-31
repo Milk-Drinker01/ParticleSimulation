@@ -17,7 +17,7 @@ float _drag;
 float2 boundsX;
 float2 boundsY;
 float2 boundsZ;
-float _distThresh;
+float2 _distThresh;
 
 StructuredBuffer<float> _attractionMatrix;
 StructuredBuffer<particleType> _particleTypes;
@@ -69,9 +69,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         b = _particleData[i];
         float d = distance(a.position, b.position);
-        if (d > 0)
+        if (d > 0 && d < _distThresh.y)
         {
-            d = clamp(d, _distThresh, 9999);
+            d = clamp(d, _distThresh.x, 9999);
             float f = _g * (1 / (d * d));
             float attractionRule = getAttraction(a.type, b.type);
             float3 difference = normalize(b.position - a.position) * f * _deltaTime;

@@ -18,7 +18,8 @@ public class ParticleController : MonoBehaviour
     public Bounds bounds;
     public float g = 10;
     public float drag = 1;
-    public float distanceThreshold = 1;
+    public float minDistanceThreshold = 1;
+    public float maxDistanceThreshold = 10;
     public bool useTriangularMatrix;
     [HideInInspector] public int OldNumParticleTypes;
     [HideInInspector] public bool useTriangularMatrixOld;
@@ -126,7 +127,7 @@ public class ParticleController : MonoBehaviour
             _g *= Mathf.Sin(Time.time * sinSpeed);
         particleCS.SetFloat(gID, _g);
         particleCS.SetFloat(dID, drag);
-        particleCS.SetFloat(distThreshID, distanceThreshold);
+        particleCS.SetVector(distThreshID, new Vector2(minDistanceThreshold, maxDistanceThreshold));
 
         Vector3 extents = bounds.extents / 2;
         Vector3 center = bounds.center / 2;
